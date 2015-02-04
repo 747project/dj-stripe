@@ -204,7 +204,12 @@ class Event(StripeObject):
                     if not self.customer:
                         self.link_customer()
                     if self.customer:
-                        self.customer.sync_current_subscription()
+                        if self.kind == 'customer.subscription.deleted':
+                            self.customer.delete_current_subscription(
+                                self.message["data"]["object"]["plan"]["id"]
+                            )
+                        else:
+                            self.customer.sync_current_subscription()
                 elif self.kind == "customer.deleted":
                     if not self.customer:
                         self.link_customer()
@@ -477,6 +482,15 @@ class Customer(StripeObject):
         cu = cu or self.stripe_customer
         for charge in cu.charges(**kwargs).data:
             self.record_charge(charge.id)
+
+    def delete_current_subscription(self, plan_id, cu=None):
+        cu = cu or self.stripe_customer
+        try:
+            sub_obj = self.current_subscription
+            if sub_obj.plan == plan_id:
+                sub_obj.delete()
+        except CurrentSubscription.DoesNotExist:
+            pass
 
     def sync_current_subscription(self, cu=None):
         cu = cu or self.stripe_customer
