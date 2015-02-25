@@ -506,6 +506,7 @@ class Customer(StripeObject):
                     sub.current_period_end
                 )
                 sub_obj.amount = (sub.plan.amount / decimal.Decimal("100"))
+                sub_obj.currency = sub.plan.currency
                 sub_obj.status = sub.status
                 sub_obj.cancel_at_period_end = sub.cancel_at_period_end
                 sub_obj.canceled_at = convert_tstamp(sub, "canceled_at")
@@ -636,6 +637,7 @@ class CurrentSubscription(TimeStampedModel):
     trial_end = models.DateTimeField(null=True, blank=True)
     trial_start = models.DateTimeField(null=True, blank=True)
     amount = models.DecimalField(decimal_places=2, max_digits=7)
+    currency = models.CharField(max_length=3, default='')
 
     def plan_display(self):
         return PAYMENTS_PLANS[self.plan]["name"]
